@@ -1,14 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  StyleSheet, 
-  Text, 
-  View, 
-  TouchableOpacity, 
-  FlatList, 
-  SafeAreaView, 
-  Alert 
-} from 'react-native';
-
+import { Text, View, TouchableOpacity, FlatList, SafeAreaView, Alert } from 'react-native';
 import {
   useAudioRecorder,
   AudioModule,
@@ -17,17 +8,9 @@ import {
   useAudioRecorderState,
   useAudioPlayer,
 } from 'expo-audio';
-
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import Animated, { 
-  useSharedValue, 
-  useAnimatedStyle, 
-  withRepeat, 
-  withTiming, 
-  Easing 
-} from 'react-native-reanimated';
-
 import { globalStyles as styles } from './src/styles/globalStyles';
+import { storageService } from './src/services/storageService';
+import { CloverLoader } from './src/components/CloverLoader';
 
 interface Spell {
   id: string;
@@ -39,54 +22,26 @@ export default function App() {
   const [spells, setSpells] = useState<Spell[]>([]);
   const [isAppLoading, setIsAppLoading] = useState(true);
 
-  // Grabadora y su estado
   const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const recorderState = useAudioRecorderState(audioRecorder);
-  
-  // Reproductor
   const player = useAudioPlayer('');
-  const rotation = useSharedValue(0);
 
   useEffect(() => {
-    // Configuración
     (async () => {
+      //Solicitar permisos
       const status = await AudioModule.requestRecordingPermissionsAsync();
       if (!status.granted) {
-        Alert.alert('Si el hechizo deseas activar, tus permisos de audio deberás otorgar.');
+        Alert.alert('Grimorio bloqueado', 'Se requieren permisos de audio.');
       }
 
-      await setAudioModeAsync({
-        playsInSilentMode: true,
-        allowsRecording: true,
-      });
+      await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: true });
       
-      await loadGrimorio();
-    })();
-
-    rotation.value = withRepeat(
-      withTiming(360, { duration: 2000, easing: Easing.linear }),
-      -1, false
-    );
-  }, []);
-
-  const cloverAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${rotation.value}deg` }],
-  }));
-
-  const loadGrimorio = async () => {
-    try {
-      const saved = await AsyncStorage.getItem('@grimorio_spells');
-      if (saved) setSpells(JSON.parse(saved));
-    } catch (e) {
-      console.error(e);
-    } finally {
+      //Recuperar audios antiguos
+      const saved = await storageService.getData<Spell[]>('@grimorio_spells');
+      if (saved) setSpells(saved);
       setIsAppLoading(false);
-    }
-  };
-
-  const saveToGrimorio = async (newSpells: Spell[]) => {
-    await AsyncStorage.setItem('@grimorio_spells', JSON.stringify(newSpells));
-  };
+    })();
+  }, []);
 
   const handleRecordPress = async () => {
     if (recorderState.isRecording) {
@@ -98,7 +53,8 @@ export default function App() {
       };
       const updated = [...spells, newSpell];
       setSpells(updated);
-      await saveToGrimorio(updated);
+      //Uso del servicio genérico 
+      await storageService.saveData('@grimorio_spells', updated);
     } else {
       try {
         await audioRecorder.prepareToRecordAsync();
@@ -117,23 +73,21 @@ export default function App() {
   const deleteSpell = async (id: string) => {
     const updated = spells.filter(s => s.id !== id);
     setSpells(updated);
-    await saveToGrimorio(updated);
+    await storageService.saveData('@grimorio_spells', updated);
   };
 
+  //Carga inicial 
   if (isAppLoading) {
     return (
       <View style={styles.center}>
-        <Animated.View style={cloverAnimatedStyle}>
-          <Text style={{fontSize: 60}}>🍀</Text>
-        </Animated.View>
-        <Text style={styles.loadingText}>Cargando todos los hechizos posibles...</Text>
+        <CloverLoader message="Invocando grimorio..." />
       </View>
     );
   }
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Grimorio de Asta, El libro del guerrero antimágico</Text>
+      <Text style={styles.title}>Grimorio de Asta</Text>
 
       <View style={styles.recorderSection}>
         <TouchableOpacity 
@@ -144,8 +98,11 @@ export default function App() {
             {recorderState.isRecording ? "STOP" : "GRABAR"}
           </Text>
         </TouchableOpacity>
+        
+        {/*  Carga/Animación durante la grabación  */}
+        
         {recorderState.isRecording && (
-          <Text style={styles.statusText}>¡DETEN EL HECHIZO!</Text>
+          <CloverLoader message="¡REGISTRANDO ANTI-MAGIA!" />
         )}
       </View>
 
@@ -169,7 +126,7 @@ export default function App() {
 
       <TouchableOpacity 
         style={styles.clearBtn} 
-        onPress={async () => { setSpells([]); await AsyncStorage.clear(); }}
+        onPress={async () => { setSpells([]); await storageService.clear('@grimorio_spells'); }}
       >
         <Text style={{color: 'white', fontWeight: 'bold'}}>VACIAR GRIMORIO</Text>
       </TouchableOpacity>
