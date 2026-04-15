@@ -87,7 +87,7 @@ export default function App() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Grimorio de Asta</Text>
+      <Text style={styles.title}>Grimorio de la magia de voz</Text>
 
       <View style={styles.recorderSection}>
         <TouchableOpacity 
@@ -102,7 +102,7 @@ export default function App() {
         {/*  Carga/Animación durante la grabación  */}
         
         {recorderState.isRecording && (
-          <CloverLoader message="¡REGISTRANDO ANTI-MAGIA!" />
+          <CloverLoader message="¡TU HECHIZO ESTÁ SIENDO INVOCADO!" />
         )}
       </View>
 
@@ -114,7 +114,7 @@ export default function App() {
             <Text style={styles.spellText}>{item.name}</Text>
             <View style={styles.itemActions}>
               <TouchableOpacity onPress={() => playSpell(item.uri)} style={styles.actionIcon}>
-                <Text style={{fontSize: 20}}>⚔️</Text>
+                <Text style={{fontSize: 20}}>▶️</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={() => deleteSpell(item.id)} style={styles.actionIcon}>
                 <Text style={{fontSize: 20}}>🗑️</Text>
@@ -128,7 +128,7 @@ export default function App() {
         style={styles.clearBtn} 
         onPress={async () => { setSpells([]); await storageService.clear('@grimorio_spells'); }}
       >
-        <Text style={{color: 'white', fontWeight: 'bold'}}>VACIAR GRIMORIO</Text>
+        <Text style={{color: 'white', fontWeight: 'bold'}}>ELIMINAR HECHIZOS</Text>
       </TouchableOpacity>
     </SafeAreaView>
   );

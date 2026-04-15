@@ -40,5 +40,5 @@ export const CloverLoader: React.FC<Props> = ({ message }) => {
 const styles = StyleSheet.create({
   container: { justifyContent: 'center', alignItems: 'center', marginVertical: 20 },
 
-  text: { color: '#ffcc00', marginTop: 10, fontWeight: 'bold' }
+  text: { color: '#ff0000', marginTop: 10, fontWeight: 'bold' }
 });

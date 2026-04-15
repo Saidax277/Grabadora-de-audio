@@ -34,8 +34,7 @@
           "enableBackgroundPlayback": true,
           "enableBackgroundRecording": false
         }
-      ],
-      "react-native-reanimated/plugin"
+      ]
     ]
   }
 }
